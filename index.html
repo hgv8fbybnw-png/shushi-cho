@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1">
+<title>収支帳</title>
+<meta name="description" content="入ったお金と使ったお金を、ボタンひとつで記録する帳面">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="収支帳">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="icon" href="icon-192.png" sizes="192x192">
+<meta name="theme-color" content="#f7f7f5" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#121316" media="(prefers-color-scheme: dark)">
+<link rel="stylesheet" href="app.css">
+</head>
+<body>
+
+<div id="boot" class="boot"><div class="boot-mark" aria-hidden="true"></div></div>
+
+<!-- ============ 最初の1回だけ：合言葉を入れる ============ -->
+<section id="gate" class="gate" hidden>
+  <div class="gate-box">
+    <h1 class="gate-title">収支帳</h1>
+    <p class="gate-lead">この帳面をひらく合言葉を入れてください。<br>1回入れれば、次からは聞かれません。</p>
+    <form id="gate-form" autocomplete="off">
+      <input id="gate-key" type="text" inputmode="latin" autocapitalize="off" autocorrect="off"
+             spellcheck="false" placeholder="合言葉" aria-label="合言葉">
+      <button type="submit" class="btn-primary">ひらく</button>
+    </form>
+    <p id="gate-msg" class="gate-msg" role="status" aria-live="polite"></p>
+  </div>
+</section>
+
+<!-- ============ 本体 ============ -->
+<div id="app" class="app" hidden>
+
+  <header class="hd">
+    <div class="hd-in">
+      <span class="hd-title" id="hd-title">入れる</span>
+      <div class="hd-right">
+        <span id="sync" class="sync" role="status" aria-live="polite"></span>
+        <button id="btn-settings" class="icon-btn" aria-label="設定">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6h.09A1.65 1.65 0 0 0 10 3.09V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9v.09a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main class="main">
+
+    <!-- ---------- 入れる ---------- -->
+    <section id="view-input" class="view">
+      <div class="seg" role="tablist" aria-label="種類">
+        <button class="seg-b is-on" data-kind="支出" role="tab" aria-selected="true">つかった</button>
+        <button class="seg-b" data-kind="収入" role="tab" aria-selected="false">入った</button>
+      </div>
+
+      <div class="amount" id="amount-box">
+        <span class="amount-yen">¥</span>
+        <span class="amount-val" id="amount-val">0</span>
+      </div>
+
+      <div class="chips" id="genre-chips" aria-label="ジャンル"></div>
+
+      <div class="memo-row">
+        <input id="memo" type="text" maxlength="60" placeholder="メモ（どこで・なにに／入れなくてOK）" aria-label="メモ">
+        <button id="date-chip" class="date-chip" type="button">今日</button>
+      </div>
+
+      <div class="pad" id="pad">
+        <button data-k="7">7</button><button data-k="8">8</button><button data-k="9">9</button>
+        <button data-k="4">4</button><button data-k="5">5</button><button data-k="6">6</button>
+        <button data-k="1">1</button><button data-k="2">2</button><button data-k="3">3</button>
+        <button data-k="000">000</button><button data-k="0">0</button>
+        <button data-k="del" aria-label="ひと文字消す"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6H9l-5 6 5 6h11a1 1 0 0 0 1-1V7a1 1 0 0 0-1-1z"/><path d="M17 10l-4 4M13 10l4 4"/></svg></button>
+      </div>
+
+      <button id="save" class="btn-primary btn-save" disabled>記録する</button>
+    </section>
+
+    <!-- ---------- グラフ ---------- -->
+    <section id="view-chart" class="view" hidden></section>
+
+    <!-- ---------- 明細 ---------- -->
+    <section id="view-list" class="view" hidden></section>
+
+  </main>
+
+  <nav class="tabbar" role="tablist" aria-label="画面">
+    <button class="tab is-on" data-view="input" role="tab" aria-selected="true">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 8.5v7M8.5 12h7"/></svg><span>入れる</span>
+    </button>
+    <button class="tab" data-view="chart" role="tab" aria-selected="false">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20V11M10 20V4M16 20v-6M22 20H2"/></svg><span>グラフ</span>
+    </button>
+    <button class="tab" data-view="list" role="tab" aria-selected="false">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h10"/></svg><span>明細</span>
+    </button>
+  </nav>
+
+</div>
+
+<div id="sheet" class="sheet" hidden><div class="sheet-bg" data-close></div><div class="sheet-in" id="sheet-in" role="dialog" aria-modal="true"></div></div>
+<div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
+
+<script src="app.js"></script>
+</body>
+</html>
