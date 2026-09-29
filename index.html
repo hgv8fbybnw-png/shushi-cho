@@ -20,22 +20,6 @@
 
 <div id="boot" class="boot"><div class="boot-mark" aria-hidden="true"></div></div>
 
-<!-- ============ 最初の1回だけ：合言葉を入れる ============ -->
-<section id="gate" class="gate" hidden>
-  <div class="gate-box">
-    <h1 class="gate-title">収支帳</h1>
-    <p class="gate-lead">この帳面をひらく合言葉を入れてください。<br>1回入れれば、次からは聞かれません。</p>
-    <form id="gate-form" autocomplete="off">
-      <input id="gate-key" type="text" inputmode="latin" autocapitalize="off" autocorrect="off"
-             spellcheck="false" placeholder="合言葉、またはリンクごと貼り付け" aria-label="合言葉">
-      <button type="submit" class="btn-primary">ひらく</button>
-    </form>
-    <p id="gate-msg" class="gate-msg" role="status" aria-live="polite"></p>
-    <p class="gate-hint">打ち込まなくても大丈夫です。<br><strong>合言葉つきのリンクを、そのまま貼り付けられます。</strong></p>
-    <p class="gate-esc"><a href="?reset=1">うまくいかないときは、この端末の記憶をぜんぶ消してやり直す</a></p>
-  </div>
-</section>
-
 <!-- ============ 本体 ============ -->
 <div id="app" class="app" hidden>
 

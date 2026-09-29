@@ -15,7 +15,17 @@
 
   var 既定のAPI = 'https://script.google.com/macros/s/AKfycbzq1bmdy8rhDf3ik_F1KcfsZY3rAX_cmLXCpCE7TYHqTmwnQTv4lmUuSUERy9ytm034/exec';
   var シートURL = 'https://docs.google.com/spreadsheets/d/1v3NwlMH8bDSps2d7O04xCgW4uuQI4cdWpWU4D4oBFBQ/edit';
-  var 版 = '1.0.3';
+  var 版 = '1.1.0';
+
+  /**
+   * 合言葉。2026-09-29、宮本さんの判断でここに埋め込みました（画面では一切聞きません）。
+   *
+   * ⚠️ この置き場は誰でも見られる公開ページなので、これは「守り」ではありません。
+   *    このURLにたどり着いた人は、収支を全部見られるし、記録を消せます。
+   *    それを承知のうえで「聞かれないこと」を優先した、という決定です。
+   *    守りを戻したくなったら、スプレッドシートの 設定タブB2 を変えて、ここも同じ値に直します。
+   */
+  var 合言葉 = 'bgfqumte8utqmdtt';
 
   var 鍵 = { key: 'sj.key', data: 'sj.data', api: 'sj.api', tbl: 'sj.tbl' };
 
@@ -142,7 +152,7 @@
 
   var S = {
     api: 読む(鍵.api, null) || 既定のAPI,
-    key: 読む(鍵.key, ''),
+    key: 合言葉,
     records: [],
     genres: [],
     view: 'input',
@@ -163,7 +173,8 @@
 
   /**
    * ?reset=1 が付いていたら、この端末に覚えたものを全部すてる。
-   * 合言葉がおかしくなって「開けない」状態から、確実に抜け出すための非常口です。
+   * おかしくなったときに、確実にまっさらから始めるための非常口です。
+   * （スプレッドシートのデータは消えません。手元の控えだけ捨てます）
    */
   function 全部すてる_() {
     try {
@@ -191,99 +202,25 @@
 
     if (u.searchParams.get('reset')) {
       全部すてる_();
-      S.key = '';
       S.records = [];
       S.genres = [];
     }
 
+    // 合言葉はアプリに埋め込んであるので、ふだんは何も要りません。
+    // 端末に覚えた合言葉は、あえて見にいきません。
+    // 古いものが残っていると「開けない」状態にハマるからです（実際にハマりました）。
+    // 合言葉を変えたときだけ、?k=あたらしい合言葉 で上書きできます。
     var kq = u.searchParams.get('k');
-    if (kq) {
-      S.key = kq;
-      書く(鍵.key, S.key);
-      // ⚠️ ここで ?k= をアドレスから消してはいけません。
-      // 消すと、そのあと「ホーム画面に追加」したときに合言葉なしのURLが焼き付き、
-      // アイコンから開くたびに合言葉を聞かれるようになります（実際に起きました）。
-      // iPhoneは Safari とホーム画面のアプリで保管場所が別なので、
-      // 起動URLに合言葉が乗っていることが頼りです。
-    }
-    var aq = new URL(location.href).searchParams.get('api');
+    if (kq) S.key = kq;
+
+    var aq = u.searchParams.get('api');
     if (aq) { S.api = aq; 書く(鍵.api, aq); }
 
     var c = 読む(鍵.data, null);
     if (c && c.records) { S.records = c.records; S.genres = c.genres || []; }
 
     $('#boot').hidden = true;
-
-    if (!S.key) { 門をひらく(); return; }
     アプリを出す();
-  }
-
-  function 門をひらく(文言) {
-    $('#gate').hidden = false;
-    $('#app').hidden = true;
-    if (文言) $('#gate-msg').textContent = 文言;
-    setTimeout(function () { $('#gate-key').focus(); }, 60);
-  }
-
-  /**
-   * 入れてもらった合言葉を、できるだけ受け取れる形に直す。
-   * ・空白（全角も）をぜんぶ落とす
-   * ・リンクをまるごと貼られたら、その中の k= を取り出す
-   * 16文字を手で打つのは間違えます。貼り付けで済むようにしておくのが要。
-   */
-  function 合言葉を整える_(生) {
-    var s = String(生 == null ? '' : 生).replace(/[　\s]/g, '');
-    var m = s.match(/[?&#]k=([^&#]+)/);
-    if (m) {
-      try { s = decodeURIComponent(m[1]); } catch (e) { s = m[1]; }
-    }
-    return s;
-  }
-
-  var 門の失敗回数 = 0;
-
-  $('#gate-form').addEventListener('submit', function (e) {
-    e.preventDefault();
-    var v = 合言葉を整える_($('#gate-key').value);
-    if (!v) return;
-    $('#gate-msg').textContent = 'たしかめています…';
-    門をためす_(v, [v.toLowerCase()]);
-  });
-
-  /**
-   * 合言葉をためす。だめだったら、あとの候補（小文字にしたもの等）も順に試す。
-   * 打ち間違いで1回落ちるのがいちばん多いので、粘る。
-   */
-  function 門をためす_(v, あとの候補) {
-    S.key = v;
-    呼ぶ('all', {}).then(function (r) {
-      if (r && r.ok) {
-        門の失敗回数 = 0;
-        書く(鍵.key, v);
-        S.records = r.records || [];
-        S.genres = r.genres || [];
-        控えを保存();
-        $('#gate-msg').textContent = '';
-        $('#gate').hidden = true;
-        アプリを出す();
-        return;
-      }
-      if (r && r.鍵ちがい) {
-        var 次 = (あとの候補 || []).filter(function (x) { return x && x !== v; });
-        if (次.length) { 門をためす_(次[0], 次.slice(1)); return; }
-        S.key = '';
-        門の失敗回数++;
-        $('#gate-msg').innerHTML = 門の失敗回数 >= 2
-          ? '合言葉がちがいます。<br>もらったリンクを長押しでコピーして、<br>この欄にそのまま貼り付けてみてください。'
-          : '合言葉がちがいます';
-        return;
-      }
-      S.key = '';
-      $('#gate-msg').textContent = (r && r.error) || 'うまくいきませんでした';
-    }).catch(function () {
-      S.key = '';
-      $('#gate-msg').innerHTML = 'つながりませんでした。<br>電波を確かめて、もう一度おしてください';
-    });
   }
 
   function アプリを出す() {
@@ -308,7 +245,14 @@
     呼ぶ('all', {}).then(function (r) {
       S.読込中 = false;
       if (!r || !r.ok) {
-        if (r && r.鍵ちがい) { localStorage.removeItem(鍵.key); S.key = ''; 門をひらく('合言葉がちがいます'); return; }
+        if (r && r.鍵ちがい) {
+          // 前に ?k= で覚えた合言葉が古くなっている場合。埋め込みのものに戻してやり直す。
+          localStorage.removeItem(鍵.key);
+          if (S.key !== 合言葉) { S.key = 合言葉; 読み込む(1); return; }
+          S.とれなかった = 'データにつながれません';
+          しるしを更新();
+          return;
+        }
         もう一度(あと何回, (r && r.error) || 'とれませんでした');
         return;
       }
@@ -1044,7 +988,7 @@
       '<button class="set-item" data-a="genres">ジャンルの整理<small>名前を変える・しまう</small></button>' +
       (シートURL ? '<button class="set-item" data-a="sheet">スプレッドシートをひらく<small>もとのデータ</small></button>' : '') +
       '<button class="set-item" data-a="copy">ぜんぶコピー<small>CSVで書き出す</small></button>' +
-      '<button class="set-item" data-a="logout">合言葉を入れ直す<small>この端末から消します</small></button>' +
+      '<button class="set-item" data-a="reset">この端末の記憶を消してやり直す<small>記録そのものは消えません</small></button>' +
       '<div class="set-item" style="color:var(--ink-3);font-size:13px">収支帳 ' + 版 + '</div>' +
       '</div>',
       function (箱) {
@@ -1065,10 +1009,9 @@
               .then(function () { トースト('コピーしました（' + S.records.length + '件）'); })
               .catch(function () { トースト('コピーできませんでした'); });
           }
-          if (a === 'logout') {
-            localStorage.removeItem(鍵.key);
-            localStorage.removeItem(鍵.data);
-            location.reload();
+          if (a === 'reset') {
+            全部すてる_();
+            location.href = location.pathname + '?reset=1';
           }
           if (a === 'genres') ジャンル整理();
         });
