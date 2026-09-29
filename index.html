@@ -14,7 +14,7 @@
 <link rel="icon" href="icon-192.png" sizes="192x192">
 <meta name="theme-color" content="#f7f7f5" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#121316" media="(prefers-color-scheme: dark)">
-<link rel="stylesheet" href="app.css">
+<link rel="stylesheet" href="app.css?v=1.1.0">
 </head>
 <body>
 
@@ -92,6 +92,9 @@
 <div id="sheet" class="sheet" hidden><div class="sheet-bg" data-close></div><div class="sheet-in" id="sheet-in" role="dialog" aria-modal="true"></div></div>
 <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
 
-<script src="app.js"></script>
+<!-- ?v= は必須。これが無いと、古いapp.jsが残った端末で「新しいHTML＋古いJS」になり、
+     画面が真っ白のまま起動しません（2026-09-29に実際に起きました）。
+     app.js / app.css を直したら、ここの数字も必ず上げること。 -->
+<script src="app.js?v=1.1.0"></script>
 </body>
 </html>

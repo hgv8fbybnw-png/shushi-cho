@@ -6,12 +6,12 @@
  * 版を上げると、古い控えは捨てて入れ直します。
  */
 
-var 版 = 'sj-v5';
+var 版 = 'sj-v6';
+// app.css / app.js は、版つきの住所（app.js?v=…）で読まれるので、ここには並べない。
+// ここに素の住所を書くと、版なしの古いものを先に掴んでしまいます。
 var もの = [
   './',
   './index.html',
-  './app.css',
-  './app.js',
   './manifest.webmanifest',
   './icon-192.png',
   './icon-512.png',
