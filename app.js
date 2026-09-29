@@ -15,7 +15,7 @@
 
   var 既定のAPI = 'https://script.google.com/macros/s/AKfycbzq1bmdy8rhDf3ik_F1KcfsZY3rAX_cmLXCpCE7TYHqTmwnQTv4lmUuSUERy9ytm034/exec';
   var シートURL = 'https://docs.google.com/spreadsheets/d/1v3NwlMH8bDSps2d7O04xCgW4uuQI4cdWpWU4D4oBFBQ/edit';
-  var 版 = '1.0.0';
+  var 版 = '1.0.1';
 
   var 鍵 = { key: 'sj.key', data: 'sj.data', api: 'sj.api', tbl: 'sj.tbl' };
 
@@ -189,29 +189,66 @@
     setTimeout(function () { $('#gate-key').focus(); }, 60);
   }
 
+  /**
+   * 入れてもらった合言葉を、できるだけ受け取れる形に直す。
+   * ・空白（全角も）をぜんぶ落とす
+   * ・リンクをまるごと貼られたら、その中の k= を取り出す
+   * 16文字を手で打つのは間違えます。貼り付けで済むようにしておくのが要。
+   */
+  function 合言葉を整える_(生) {
+    var s = String(生 == null ? '' : 生).replace(/[　\s]/g, '');
+    var m = s.match(/[?&#]k=([^&#]+)/);
+    if (m) {
+      try { s = decodeURIComponent(m[1]); } catch (e) { s = m[1]; }
+    }
+    return s;
+  }
+
+  var 門の失敗回数 = 0;
+
   $('#gate-form').addEventListener('submit', function (e) {
     e.preventDefault();
-    var v = $('#gate-key').value.trim();
+    var v = 合言葉を整える_($('#gate-key').value);
     if (!v) return;
     $('#gate-msg').textContent = 'たしかめています…';
+    門をためす_(v, [v.toLowerCase()]);
+  });
+
+  /**
+   * 合言葉をためす。だめだったら、あとの候補（小文字にしたもの等）も順に試す。
+   * 打ち間違いで1回落ちるのがいちばん多いので、粘る。
+   */
+  function 門をためす_(v, あとの候補) {
     S.key = v;
     呼ぶ('all', {}).then(function (r) {
       if (r && r.ok) {
+        門の失敗回数 = 0;
         書く(鍵.key, v);
         S.records = r.records || [];
         S.genres = r.genres || [];
         控えを保存();
+        $('#gate-msg').textContent = '';
         $('#gate').hidden = true;
         アプリを出す();
-      } else {
-        S.key = '';
-        $('#gate-msg').textContent = (r && r.鍵ちがい) ? '合言葉がちがいます' : ((r && r.error) || 'うまくいきませんでした');
+        return;
       }
+      if (r && r.鍵ちがい) {
+        var 次 = (あとの候補 || []).filter(function (x) { return x && x !== v; });
+        if (次.length) { 門をためす_(次[0], 次.slice(1)); return; }
+        S.key = '';
+        門の失敗回数++;
+        $('#gate-msg').innerHTML = 門の失敗回数 >= 2
+          ? '合言葉がちがいます。<br>もらったリンクを長押しでコピーして、<br>この欄にそのまま貼り付けてみてください。'
+          : '合言葉がちがいます';
+        return;
+      }
+      S.key = '';
+      $('#gate-msg').textContent = (r && r.error) || 'うまくいきませんでした';
     }).catch(function () {
       S.key = '';
-      $('#gate-msg').textContent = 'つながりませんでした。電波を確かめてください';
+      $('#gate-msg').innerHTML = 'つながりませんでした。<br>電波を確かめて、もう一度おしてください';
     });
-  });
+  }
 
   function アプリを出す() {
     $('#app').hidden = false;

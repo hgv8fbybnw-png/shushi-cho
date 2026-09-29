@@ -4,7 +4,6 @@
   "description": "入ったお金と使ったお金を、ボタンひとつで記録する帳面",
   "lang": "ja",
   "dir": "ltr",
-  "start_url": "./",
   "scope": "./",
   "display": "standalone",
   "orientation": "portrait",
