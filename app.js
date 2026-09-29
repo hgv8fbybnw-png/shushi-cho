@@ -15,7 +15,7 @@
 
   var 既定のAPI = 'https://script.google.com/macros/s/AKfycbzq1bmdy8rhDf3ik_F1KcfsZY3rAX_cmLXCpCE7TYHqTmwnQTv4lmUuSUERy9ytm034/exec';
   var シートURL = 'https://docs.google.com/spreadsheets/d/1v3NwlMH8bDSps2d7O04xCgW4uuQI4cdWpWU4D4oBFBQ/edit';
-  var 版 = '1.0.2';
+  var 版 = '1.0.3';
 
   var 鍵 = { key: 'sj.key', data: 'sj.data', api: 'sj.api', tbl: 'sj.tbl' };
 
@@ -161,8 +161,41 @@
 
   // ================= 立ち上がり =================
 
+  /**
+   * ?reset=1 が付いていたら、この端末に覚えたものを全部すてる。
+   * 合言葉がおかしくなって「開けない」状態から、確実に抜け出すための非常口です。
+   */
+  function 全部すてる_() {
+    try {
+      localStorage.removeItem(鍵.key);
+      localStorage.removeItem(鍵.data);
+      localStorage.removeItem(鍵.api);
+      localStorage.removeItem(鍵.tbl);
+    } catch (e) { /* 消せなくても先に進む */ }
+    try {
+      if (window.caches && caches.keys) {
+        caches.keys().then(function (名たち) {
+          名たち.forEach(function (n) { caches.delete(n); });
+        });
+      }
+      if (navigator.serviceWorker && navigator.serviceWorker.getRegistrations) {
+        navigator.serviceWorker.getRegistrations().then(function (たち) {
+          たち.forEach(function (r) { r.unregister(); });
+        });
+      }
+    } catch (e) { /* 同上 */ }
+  }
+
   function 起動() {
     var u = new URL(location.href);
+
+    if (u.searchParams.get('reset')) {
+      全部すてる_();
+      S.key = '';
+      S.records = [];
+      S.genres = [];
+    }
+
     var kq = u.searchParams.get('k');
     if (kq) {
       S.key = kq;
