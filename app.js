@@ -15,7 +15,7 @@
 
   var 既定のAPI = 'https://script.google.com/macros/s/AKfycbzq1bmdy8rhDf3ik_F1KcfsZY3rAX_cmLXCpCE7TYHqTmwnQTv4lmUuSUERy9ytm034/exec';
   var シートURL = 'https://docs.google.com/spreadsheets/d/1v3NwlMH8bDSps2d7O04xCgW4uuQI4cdWpWU4D4oBFBQ/edit';
-  var 版 = '1.0.1';
+  var 版 = '1.0.2';
 
   var 鍵 = { key: 'sj.key', data: 'sj.data', api: 'sj.api', tbl: 'sj.tbl' };
 
@@ -167,8 +167,11 @@
     if (kq) {
       S.key = kq;
       書く(鍵.key, S.key);
-      u.searchParams.delete('k');
-      history.replaceState(null, '', u.pathname + (u.search === '?' ? '' : u.search) + u.hash);
+      // ⚠️ ここで ?k= をアドレスから消してはいけません。
+      // 消すと、そのあと「ホーム画面に追加」したときに合言葉なしのURLが焼き付き、
+      // アイコンから開くたびに合言葉を聞かれるようになります（実際に起きました）。
+      // iPhoneは Safari とホーム画面のアプリで保管場所が別なので、
+      // 起動URLに合言葉が乗っていることが頼りです。
     }
     var aq = new URL(location.href).searchParams.get('api');
     if (aq) { S.api = aq; 書く(鍵.api, aq); }
